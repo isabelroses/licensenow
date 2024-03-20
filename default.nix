@@ -15,9 +15,9 @@ buildGoModule {
   ldflags = ["-s" "-w"];
 
   meta = {
-    description = "isabelroses.com";
-    homepage = "https://isabelroses.com/";
-    license = with lib.licenses; [gpl3];
+    description = "licencenow gets you a license for your project";
+    homepage = "https://github.com/isabelroses/licencenow";
+    license = with lib.licenses; [mit];
     maintainers = with lib.maintainers; [isabelroses];
     platforms = lib.platforms.all;
   };
