@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	licence string
+	license string
 	outfile = "LICENSE"
 
 	name = os.Getenv("USER")
@@ -27,13 +27,13 @@ func main() {
 		form := huh.NewForm(
 			huh.NewGroup(
 				huh.NewSelect[string]().
-					Title("Pick a licence.").
+					Title("Pick a license.").
 					Options(
 						huh.NewOption(licnceOpt("MIT")),
 						huh.NewOption(licnceOpt("GPLv3")),
 						huh.NewOption(licnceOpt("cc by-nc-sa 4.0")),
 					).
-					Value(&licence),
+					Value(&license),
 			),
 		).WithTheme(huh.ThemeCatppuccin())
 
@@ -56,12 +56,12 @@ func main() {
 				i++
 				year, _ = strconv.Atoi(args[i])
 			default:
-				licence = cleanLicence(args[i])
+				license = cleanLicense(args[i])
 			}
 		}
 	}
 
-	tmpl := template.Must(template.ParseFiles(licence))
+	tmpl := template.Must(template.ParseFiles(license))
 
 	f, err := os.Create(outfile)
 	if err != nil {
@@ -85,14 +85,14 @@ func main() {
 	f.Close()
 }
 
-func licnceOpt(licence string) (string, string) {
-	file := cleanLicence(licence)
-	return licence, file
+func licnceOpt(license string) (string, string) {
+	file := cleanLicense(license)
+	return license, file
 }
 
-func cleanLicence(licence string) string {
-	cleanLicence := strings.ToLower(licence)
-	cleanLicence = strings.ReplaceAll(cleanLicence, " ", "-")
-	cleanLicence = strings.ReplaceAll(cleanLicence, ".", "")
-	return path.Join("./templates", cleanLicence+".tmpls")
+func cleanLicense(license string) string {
+	cleanLicense := strings.ToLower(license)
+	cleanLicense = strings.ReplaceAll(cleanLicense, " ", "-")
+	cleanLicense = strings.ReplaceAll(cleanLicense, ".", "")
+	return path.Join("./templates", cleanLicense+".tmpls")
 }
