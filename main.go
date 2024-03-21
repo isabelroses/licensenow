@@ -1,55 +1,98 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
+	"path"
+	"strconv"
+	"strings"
+	"text/template"
+	"time"
 
 	"github.com/charmbracelet/huh"
 )
 
+var (
+	licence string
+	outfile = "LICENSE"
+
+	name = os.Getenv("USER")
+	year = time.Now().Year()
+
+	args = os.Args
+)
+
 func main() {
-	var url string
+	if len(args) == 1 {
+		form := huh.NewForm(
+			huh.NewGroup(
+				huh.NewSelect[string]().
+					Title("Pick a licence.").
+					Options(
+						huh.NewOption(licnceOpt("MIT")),
+						huh.NewOption(licnceOpt("GPLv3")),
+						huh.NewOption(licnceOpt("cc by-nc-sa 4.0")),
+					).
+					Value(&licence),
+			),
+		).WithTheme(huh.ThemeCatppuccin())
 
-	form := huh.NewForm(
-		huh.NewGroup(
-			huh.NewSelect[string]().
-				Title("Pick a licence.").
-				Options(
-					huh.NewOption("MIT", "https://gist.githubusercontent.com/isabelroses/fa6f71651be564ada535bb56dec1e13b/raw/c766f746e94771d92bea73db881a567215b5fe77/MIT%2520License"),
-					huh.NewOption("GPLv3", "https://www.gnu.org/licenses/gpl-3.0.txt"),
-					huh.NewOption("cc by-nc-sa 4.0", "https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.txt"),
-				).
-				Value(&url),
-		),
-	).WithTheme(huh.ThemeCatppuccin())
+		err := form.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		args = os.Args[1:]
 
-	err := form.Run()
+		for i := 0; i < len(args); i++ {
+			switch args[i] {
+			case "-o":
+				i++
+				outfile = args[i]
+			case "-n":
+				i++
+				name = args[i]
+			case "-y":
+				i++
+				year, _ = strconv.Atoi(args[i])
+			default:
+				licence = cleanLicence(args[i])
+			}
+		}
+	}
+
+	tmpl := template.Must(template.ParseFiles(licence))
+
+	f, err := os.Create(outfile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	response, err := http.Get(url)
-	if err != nil {
-		fmt.Printf("Failed to fetch the URL: %v", err)
-		return
-	}
-	defer response.Body.Close()
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		log.Printf("Failed to read response body: %v", err)
-		return
+	data := struct {
+		Name string
+		Year int
+	}{
+		Name: name,
+		Year: year,
 	}
 
-	file, err := os.OpenFile("LICENSE", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	err = tmpl.Execute(f, data)
 	if err != nil {
-		log.Printf("Failed to open file: %v", err)
+		log.Print("execute: ", err)
 		return
 	}
-	defer file.Close()
 
-	_, err = file.Write(body)
+	f.Close()
+}
+
+func licnceOpt(licence string) (string, string) {
+	file := cleanLicence(licence)
+	return licence, file
+}
+
+func cleanLicence(licence string) string {
+	cleanLicence := strings.ToLower(licence)
+	cleanLicence = strings.ReplaceAll(cleanLicence, " ", "-")
+	cleanLicence = strings.ReplaceAll(cleanLicence, ".", "")
+	return path.Join("./templates", cleanLicence+".tmpls")
 }
