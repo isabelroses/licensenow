@@ -1,11 +1,10 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"os"
-	"path"
-	"strconv"
-	"strings"
 	"text/template"
 	"time"
 
@@ -13,25 +12,29 @@ import (
 )
 
 var (
-	license string
 	outfile = "LICENSE"
-
-	name = os.Getenv("USER")
-	year = time.Now().Year()
-
-	args = os.Args
+	license string
+	year    string
+	name    string
 )
 
 func main() {
-	if len(args) == 1 {
+	// If no arguments are passed, show a form
+	if len(os.Args) == 1 {
 		form := huh.NewForm(
 			huh.NewGroup(
+				huh.NewInput().
+					Title("What's your name?").
+					Value(&name),
+				huh.NewInput().
+					Title("What year is it?").
+					Value(&year),
 				huh.NewSelect[string]().
 					Title("Pick a license.").
 					Options(
-						huh.NewOption(licnceOpt("MIT")),
-						huh.NewOption(licnceOpt("GPLv3")),
-						huh.NewOption(licnceOpt("cc by-nc-sa 4.0")),
+						huh.NewOption(lo("MIT")),
+						huh.NewOption(lo("GPLv3")),
+						huh.NewOption(lo("cc by-nc-sa 4.0")),
 					).
 					Value(&license),
 			),
@@ -42,38 +45,35 @@ func main() {
 			log.Fatal(err)
 		}
 	} else {
-		args = os.Args[1:]
-
-		for i := 0; i < len(args); i++ {
-			switch args[i] {
-			case "-o":
-				i++
-				outfile = args[i]
-			case "-n":
-				i++
-				name = args[i]
-			case "-y":
-				i++
-				year, _ = strconv.Atoi(args[i])
-			default:
-				license = cleanLicense(args[i])
-			}
-		}
+		// otherwise parse the flags
+		flag.StringVar(&license, "licence", "", "License to generate")
+		flag.StringVar(&outfile, "outfile", outfile, "Output file")
+		flag.StringVar(&outfile, "o", "LICENSE", "Output file")
+		flag.StringVar(&year, "year", "", "Year to use in the license")
+		flag.StringVar(&year, "y", "", "Year to use in the license")
+		flag.StringVar(&name, "name", "", "Name to use in the license")
+		flag.StringVar(&name, "n", "", "Name to use in the license")
+		flag.Parse()
 	}
 
-	tmpl := template.Must(template.ParseFiles(license))
+	// We now parse the license as a template now
+	tmpl, err := template.New("license").Parse(licenses[license])
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	f, err := os.Create(outfile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Data to pass to the template
 	data := struct {
 		Name string
-		Year int
+		Year string
 	}{
-		Name: name,
-		Year: year,
+		Name: getName(),
+		Year: getYear(),
 	}
 
 	err = tmpl.Execute(f, data)
@@ -85,14 +85,21 @@ func main() {
 	f.Close()
 }
 
-func licnceOpt(license string) (string, string) {
-	file := cleanLicense(license)
-	return license, file
+// This saves seconds of typing
+func lo(license string) (string, string) {
+	return license, license
 }
 
-func cleanLicense(license string) string {
-	cleanLicense := strings.ToLower(license)
-	cleanLicense = strings.ReplaceAll(cleanLicense, " ", "-")
-	cleanLicense = strings.ReplaceAll(cleanLicense, ".", "")
-	return path.Join("./templates", cleanLicense+".tmpls")
+func getName() string {
+	if name != "" {
+		return name
+	}
+	return os.Getenv("USER")
+}
+
+func getYear() string {
+	if year != "" {
+		return year
+	}
+	return fmt.Sprint(time.Now().Year())
 }
