@@ -1,5 +1,8 @@
 name: releaser
 
+permissions:
+  contents: write
+
 on:
   push:
     tags:
