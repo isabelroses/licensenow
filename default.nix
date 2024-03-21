@@ -14,16 +14,6 @@ buildGoModule {
 
   ldflags = ["-s" "-w"];
 
-  preBuild = ''
-    substituteInPlace main.go \
-      --replace "./templates" "$out/share/templates" \
-  '';
-
-  postInstall = ''
-    mkdir -p $out/share
-    cp -r templates $out/share/templates
-  '';
-
   meta = {
     description = "licencenow gets you a license for your project";
     homepage = "https://github.com/isabelroses/licencenow";
