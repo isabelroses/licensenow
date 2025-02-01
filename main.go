@@ -31,11 +31,14 @@ func main() {
 					Value(&year),
 				huh.NewSelect[string]().
 					Title("Pick a license.").
-					Options(
-						huh.NewOption(lo("MIT")),
-						huh.NewOption(lo("GPLv3")),
-						huh.NewOption(lo("cc by-nc-sa 4.0")),
-					).
+					OptionsFunc(func() []huh.Option[string] {
+						var options []huh.Option[string]
+						for v := range licenseNames {
+							li := licenseNames[v]
+							options = append(options, huh.NewOption(li, li))
+						}
+						return options
+					}, &license).
 					Value(&license),
 			),
 		).WithTheme(huh.ThemeCatppuccin())
@@ -83,11 +86,6 @@ func main() {
 	}
 
 	f.Close()
-}
-
-// This saves seconds of typing
-func lo(license string) (string, string) {
-	return license, license
 }
 
 func getName() string {
