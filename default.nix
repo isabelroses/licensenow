@@ -4,19 +4,22 @@
 }:
 buildGoModule {
   pname = "licencenow";
-  version = "0.1.0";
+  version = "0.2.0";
 
   src = ./.;
 
-  vendorHash = "sha256-aVk0ccByDS4+gs2im4eU6S5daK3OVoRYoBxn3SSgDGw=";
+  vendorHash = "sha256-Aev19JLghMqSs/GKIVSzrol8aLSjufHHLpjqPTaFQ88=";
 
-  ldflags = ["-s" "-w"];
+  ldflags = [
+    "-s"
+    "-w"
+  ];
 
   meta = {
     description = "licencenow gets you a license for your project";
     homepage = "https://github.com/isabelroses/licencenow";
-    license = with lib.licenses; [mit];
-    maintainers = with lib.maintainers; [isabelroses];
-    platforms = lib.platforms.all;
+    license = with lib.licenses; [ mit ];
+    maintainers = with lib.maintainers; [ isabelroses ];
+    mainProgram = "licencenow";
   };
 }
